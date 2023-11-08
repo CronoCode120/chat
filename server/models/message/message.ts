@@ -1,60 +1,75 @@
-import { Row, createClient } from "@libsql/client";
-import { configDotenv } from "dotenv";
+import { Row, createClient } from '@libsql/client'
+import { configDotenv } from 'dotenv'
 
-type AuthObj = {
-    serverOffset: number
-    userId: number
+// interface AuthObj {
+//   serverOffset: number
+//   userId: number
+// }
+
+interface Message {
+  content: string
+  id: number
+  userId: number
 }
 
-type Message = {
-    content: string
-    id: number
-    userId: number
+interface Repository {
+  connect?: () => Promise<void>
+  reset: () => Promise<void>
+  disconnect: () => void
 }
 
-interface IMessageModel {
-    socketAuth: AuthObj
-    getAllFromOffset(): Promise<Row[] | undefined>
-    save({ content, userId }: { content: string, userId: number }): Promise<bigint | undefined>
+interface MsgModel {
+  getAllFromOffset: ({ serverOffset }: { serverOffset: number }) => Promise<Row[] | undefined>
+  save: ({ content, userId }: { content: string, userId: string }) => Promise<bigint | undefined>
 }
+
+type IMessageModel = Repository & MsgModel
 
 configDotenv()
 
 const db = createClient({
-    url: 'libsql://top-fantomette-cronocode120.turso.io',
-    authToken: process.env.DB_TOKEN
+  url: 'libsql://top-fantomette-cronocode120.turso.io',
+  authToken: process.env.DB_TOKEN
 })
 
 await db.execute(`
   CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     content TEXT,
-    user VARCHAR(40)
+    user_id VARCHAR(40)
   )
 `)
 
 export class MessageModel implements IMessageModel {
-    socketAuth: AuthObj;
+  async getAllFromOffset ({ serverOffset }: { serverOffset: number }): Promise<Row[] | undefined> {
+    const results = await db.execute({
+      sql: 'SELECT id, content, user_id FROM messages WHERE id > ?;',
+      args: [serverOffset ?? 0]
+    })
+    return results.rows
+  }
 
-    constructor({ socketAuth }: { socketAuth: AuthObj }) {
-        this.socketAuth = socketAuth
-    }
+  async save ({ content, userId }: { content: string, userId: string }): Promise<bigint | undefined> {
+    const result = await db.execute({
+      sql: 'INSERT INTO messages (content, user_id) VALUES (:content, :userId);',
+      args: { content, userId }
+    })
 
-    async getAllFromOffset() {
-        const results = await db.execute({
-            sql: 'SELECT id, content, user FROM messages WHERE id > ?',
-            args: [this.socketAuth.serverOffset ?? 0]
-        })
-        return results.rows
+    return result.lastInsertRowid
+  }
 
-    }
+  async reset (): Promise<void> {
+    await db.executeMultiple(`
+      DROP TABLE messages;
+      CREATE TABLE IF NOT EXISTS messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        content TEXT,
+        user_id VARCHAR(40)
+      )
+    `)
+  }
 
-    async save({ content, userId }: { content: string, userId: number }) {
-        const result = await db.execute({
-            sql: 'INSERT INTO messages (content, userId) VALUES (:content, :userId)',
-            args: { content, userId }
-        })
-
-        return result.lastInsertRowid
-    }
+  disconnect (): void {
+    db.close()
+  }
 }

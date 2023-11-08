@@ -12,6 +12,6 @@
     "allowImportingTsExtensions": true
   },
   "lib": ["ES6", "ESNext"],
-  "include": ["**/*.ts", "**/*.tsx"],
+  "include": ["**/*.ts", "**/*.tsx", "vite.config.js"],
   "exclude": ["node_modules"]
 }
