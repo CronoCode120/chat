@@ -1,5 +1,5 @@
-import { Row, createClient } from '@libsql/client'
-import { configDotenv } from 'dotenv'
+import { Client, Row } from '@libsql/client'
+import { sqlClient } from '../SqlClient.ts'
 
 import { validateMsg, MessageInput } from '../../schemas/validateMsg.ts'
 
@@ -9,6 +9,7 @@ import { validateMsg, MessageInput } from '../../schemas/validateMsg.ts'
 // }
 
 export interface Repository {
+  client: Client
   connect?: () => Promise<void>
   reset: () => Promise<void>
   disconnect: () => void
@@ -21,24 +22,15 @@ interface MsgModel {
 
 type IMessageModel = Repository & MsgModel
 
-configDotenv()
-
-const db = createClient({
-  url: 'libsql://top-fantomette-cronocode120.turso.io',
-  authToken: process.env.DB_TOKEN
-})
-
-await db.execute(`
-  CREATE TABLE IF NOT EXISTS messages (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    content TEXT,
-    user_id VARCHAR(40)
-  )
-`)
-
 export class MessageModel implements IMessageModel {
+  readonly client
+
+  constructor() { //eslint-disable-line
+    this.client = sqlClient
+  }
+
   async getAllFromOffset ({ serverOffset = 0 }: { serverOffset?: number } = {}): Promise<Row[] | undefined> {
-    const results = await db.execute({
+    const results = await this.client.execute({
       sql: 'SELECT id, content, user_id FROM messages WHERE id > ?;',
       args: [serverOffset]
     })
@@ -52,7 +44,7 @@ export class MessageModel implements IMessageModel {
     }
 
     const { content, userId } = params.data
-    const result = await db.execute({
+    const result = await this.client.execute({
       sql: 'INSERT INTO messages (content, user_id) VALUES (:content, :userId);',
       args: { content, userId }
     })
@@ -61,7 +53,7 @@ export class MessageModel implements IMessageModel {
   }
 
   async reset (): Promise<void> {
-    await db.executeMultiple(`
+    await this.client.executeMultiple(`
       DROP TABLE messages;
       CREATE TABLE IF NOT EXISTS messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -72,6 +64,6 @@ export class MessageModel implements IMessageModel {
   }
 
   disconnect (): void {
-    db.close()
+    this.client.close()
   }
 }

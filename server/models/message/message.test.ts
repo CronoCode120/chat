@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
-import { MessageInput, MessageModel } from './message.ts'
+import { MessageModel } from './message.ts'
+import { MessageInput } from '../../schemas/validateMsg.ts'
 
 describe('MessageModelSql', () => {
   let messageModel: MessageModel, saveAllMsgs: (msgArr: MessageInput[]) => Promise<void>
