@@ -1,25 +1,12 @@
 import { Row, createClient } from '@libsql/client'
 import { configDotenv } from 'dotenv'
 
-import { z } from 'zod'
+import { validateMsg, MessageInput } from '../../schemas/validateMsg.ts'
 
 // interface AuthObj {
 //   serverOffset: number
 //   userId: number
 // }
-
-const msgInputSchema = z.object({
-  content: z.string({
-    required_error: 'Message must have content',
-    invalid_type_error: 'Message content must be a string'
-  }).min(1, 'Message content cannot be empty'),
-  userId: z.string({
-    required_error: 'Message must include userId',
-    invalid_type_error: 'Message userId must be a string'
-  })
-})
-
-export type MessageInput = z.infer<typeof msgInputSchema>
 
 export interface Repository {
   connect?: () => Promise<void>
@@ -59,7 +46,7 @@ export class MessageModel implements IMessageModel {
   }
 
   async save (message: MessageInput): Promise<bigint | undefined> {
-    const params = msgInputSchema.safeParse(message)
+    const params = validateMsg(message)
     if (!params.success) {
       throw new Error(params.error.message)
     }

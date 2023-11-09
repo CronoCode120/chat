@@ -1,13 +1,9 @@
-import { describe, expect, it, vi } from 'vitest'
-import { msgInputSchema, validateMsg } from './validateMsg.ts'
-import { validateSchema } from './validateSchema.ts'
-
-vi.mock('./validateSchema.ts', () => ({
-  validateSchema: vi.fn(() => '::Validation::')
-}))
+import { describe, expect, it } from 'vitest'
+import { validateMsg } from './validateMsg.ts'
+import { ZodError } from 'zod'
 
 describe('validateMsg', () => {
-  it('calls validateSchema properly', () => {
+  it('should validate a valid message', () => {
     const msg = {
       content: 'Testing validateMsg',
       userId: '12'
@@ -15,7 +11,22 @@ describe('validateMsg', () => {
 
     const result = validateMsg(msg)
 
-    expect(result).toEqual('::Validation::')
-    expect(validateSchema).toBeCalledWith({ schema: msgInputSchema, params: msg })
+    expect(result.success).toBe(true)
+    // @ts-expect-error
+    expect(result.data).toStrictEqual(msg)
+  })
+
+  it('should return an error if the message is invalid', () => {
+    const msg = {
+      content: 'Testing validateMsg',
+      userId: 12
+    }
+
+    // @ts-expect-error
+    const result = validateMsg(msg)
+
+    expect(result.success).toBe(false)
+    // @ts-expect-error
+    expect(result.error).toBeInstanceOf(ZodError)
   })
 })

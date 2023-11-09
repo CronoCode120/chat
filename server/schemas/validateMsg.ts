@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { validateSchema } from './validateSchema.ts'
 
 export const msgInputSchema = z.object({
   content: z.string({
@@ -14,4 +13,4 @@ export const msgInputSchema = z.object({
 
 export type MessageInput = z.infer<typeof msgInputSchema>
 
-export const validateMsg = (msg: MessageInput): z.SafeParseError<MessageInput> | MessageInput => validateSchema({ schema: msgInputSchema, params: msg })
+export const validateMsg = (msg: MessageInput): z.SafeParseReturnType<MessageInput, MessageInput> => msgInputSchema.safeParse(msg)
