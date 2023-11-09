@@ -1,18 +1,27 @@
 import { Row, createClient } from '@libsql/client'
 import { configDotenv } from 'dotenv'
 
+import { z } from 'zod'
+
 // interface AuthObj {
 //   serverOffset: number
 //   userId: number
 // }
 
-interface Message {
-  content: string
-  id: number
-  userId: number
-}
+const msgInputSchema = z.object({
+  content: z.string({
+    required_error: 'Message must have content',
+    invalid_type_error: 'Message content must be a string'
+  }).min(1, 'Message content cannot be empty'),
+  userId: z.string({
+    required_error: 'Message must include userId',
+    invalid_type_error: 'Message userId must be a string'
+  })
+})
 
-interface Repository {
+export type MessageInput = z.infer<typeof msgInputSchema>
+
+export interface Repository {
   connect?: () => Promise<void>
   reset: () => Promise<void>
   disconnect: () => void
@@ -20,7 +29,7 @@ interface Repository {
 
 interface MsgModel {
   getAllFromOffset: ({ serverOffset }: { serverOffset: number }) => Promise<Row[] | undefined>
-  save: ({ content, userId }: { content: string, userId: string }) => Promise<bigint | undefined>
+  save: (message: MessageInput) => Promise<bigint | undefined>
 }
 
 type IMessageModel = Repository & MsgModel
@@ -41,15 +50,21 @@ await db.execute(`
 `)
 
 export class MessageModel implements IMessageModel {
-  async getAllFromOffset ({ serverOffset }: { serverOffset: number }): Promise<Row[] | undefined> {
+  async getAllFromOffset ({ serverOffset = 0 }: { serverOffset?: number } = {}): Promise<Row[] | undefined> {
     const results = await db.execute({
       sql: 'SELECT id, content, user_id FROM messages WHERE id > ?;',
-      args: [serverOffset ?? 0]
+      args: [serverOffset]
     })
     return results.rows
   }
 
-  async save ({ content, userId }: { content: string, userId: string }): Promise<bigint | undefined> {
+  async save (message: MessageInput): Promise<bigint | undefined> {
+    const params = msgInputSchema.safeParse(message)
+    if (!params.success) {
+      throw new Error(params.error.message)
+    }
+
+    const { content, userId } = params.data
     const result = await db.execute({
       sql: 'INSERT INTO messages (content, user_id) VALUES (:content, :userId);',
       args: { content, userId }
