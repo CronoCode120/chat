@@ -9,7 +9,8 @@
     "lint:check": "ts-standard",
     "lint:fix": "ts-standard --fix",
     "test": "vitest",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+    "migrate": "ts-node-esm ./server/Shared/migrations/run.ts"
   },
   "keywords": [],
   "author": "",

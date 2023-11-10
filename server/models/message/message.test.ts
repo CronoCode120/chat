@@ -38,6 +38,7 @@ describe('MessageModelSql', () => {
         userId: '4'
       }
     ]
+
     it('gets all messages from a provided offset', async () => {
       const expectedMsg = [
         {
@@ -54,7 +55,7 @@ describe('MessageModelSql', () => {
 
       await saveAllMsgs(newMessages)
 
-      const messageArr = await messageModel.getAllFromOffset({ serverOffset: 2 })
+      const messageArr = await messageModel.getAllFromOffset(2)
 
       expect(messageArr).toEqual(expectedMsg)
     })

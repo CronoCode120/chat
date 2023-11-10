@@ -16,11 +16,11 @@ export interface Repository {
 }
 
 interface MsgModel {
-  getAllFromOffset: ({ serverOffset }: { serverOffset: number }) => Promise<Row[] | undefined>
+  getAllFromOffset: (serverOffset: number) => Promise<Row[] | undefined>
   save: (message: MessageInput) => Promise<bigint | undefined>
 }
 
-type IMessageModel = Repository & MsgModel
+export type IMessageModel = Repository & MsgModel
 
 export class MessageModel implements IMessageModel {
   readonly client
@@ -29,7 +29,7 @@ export class MessageModel implements IMessageModel {
     this.client = sqlClient
   }
 
-  async getAllFromOffset ({ serverOffset = 0 }: { serverOffset?: number } = {}): Promise<Row[] | undefined> {
+  async getAllFromOffset (serverOffset = 0): Promise<Row[] | undefined> {
     const results = await this.client.execute({
       sql: 'SELECT id, content, user_id FROM messages WHERE id > ?;',
       args: [serverOffset]

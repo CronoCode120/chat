@@ -20,14 +20,6 @@ const db = createClient({
   authToken: process.env.DB_TOKEN
 })
 
-await db.execute(`
-  CREATE TABLE IF NOT EXISTS messages (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    content TEXT,
-    user VARCHAR(40)
-  )
-`)
-
 io.on('connection', async (socket) => {
   console.log('An user has connected!')
 
