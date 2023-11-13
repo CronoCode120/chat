@@ -6,7 +6,7 @@ describe('validateMsg', () => {
   it('should validate a valid message', () => {
     const msg = {
       content: 'Testing validateMsg',
-      userId: '12'
+      username: '12'
     }
 
     const result = validateMsg(msg)
@@ -19,7 +19,7 @@ describe('validateMsg', () => {
   it('should return an error if the message is invalid', () => {
     const msg = {
       content: 'Testing validateMsg',
-      userId: 12
+      username: 12
     }
 
     // @ts-expect-error

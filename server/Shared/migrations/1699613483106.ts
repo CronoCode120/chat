@@ -5,7 +5,7 @@ export async function up (client: Client): Promise<void> {
     CREATE TABLE IF NOT EXISTS messages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       content TEXT,
-      user_id VARCHAR(40)
+      username VARCHAR(40)
     );
   `)
 }

@@ -1,20 +1,37 @@
-import { Socket } from 'socket.io'
-import { IMessageModel } from '../models/message/message.ts'
+import { Server, Socket } from 'socket.io'
+import { IMessageModel } from '../models/repositories/message/message.ts'
+import { validateMsg } from '../schemas/validateMsg.ts'
+import { InvalidParamsError } from '../errors/InvalidParams.ts'
 
 export class MessageController {
   readonly messageModel
-  socket
+  client: Socket
+  server: Server
 
-  constructor({ messageModel, socket }: { messageModel: IMessageModel, socket: Socket }) { // eslint-disable-line
+  constructor({ messageModel, client, server }: { messageModel: IMessageModel, client: Socket, server: Server }) { // eslint-disable-line
     this.messageModel = messageModel
-    this.socket = socket
+    this.client = client
+    this.server = server
   }
 
-  async offsetMessages (offset = 0): Promise<void> {
-    const messages = await this.messageModel.getAllFromOffset(offset)
+  async offsetMessages (): Promise<void> {
+    const messages = await this.messageModel.getAllFromOffset(this.client.handshake.auth.serverOffset)
 
     messages?.forEach(msg => {
-      this.socket.emit('chat message', msg.content, msg.id, msg.user_id)
+      this.client.emit('chat message', msg.content, msg.id, msg.username)
     })
+  }
+
+  async save (content: string): Promise<void> {
+    const username = this.client.handshake.auth.username
+    const params = validateMsg({ content, username })
+    if (!params.success) {
+      throw new InvalidParamsError(params.error.message)
+    }
+
+    const msg = params.data
+    const lastId = await this.messageModel.save(msg)
+
+    this.server.emit('chat message', content, lastId, username)
   }
 }

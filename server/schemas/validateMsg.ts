@@ -5,9 +5,9 @@ export const msgInputSchema = z.object({
     required_error: 'Message must have content',
     invalid_type_error: 'Message content must be a string'
   }).min(1, 'Message content cannot be empty'),
-  userId: z.string({
-    required_error: 'Message must include userId',
-    invalid_type_error: 'Message userId must be a string'
+  username: z.string({
+    required_error: 'Message must include username',
+    invalid_type_error: 'Message username must be a string'
   })
 })
 

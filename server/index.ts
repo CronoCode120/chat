@@ -1,9 +1,10 @@
 import express from 'express'
 import { configDotenv } from 'dotenv'
-import { createClient } from '@libsql/client'
 
 import { Server } from 'socket.io'
 import { createServer } from 'node:http'
+import { MessageModel } from './models/repositories/message/message.ts'
+import { MessageController } from './controllers/message.ts'
 
 configDotenv()
 
@@ -15,49 +16,22 @@ const io = new Server(server, {
   connectionStateRecovery: {}
 })
 
-const db = createClient({
-  url: 'libsql://top-fantomette-cronocode120.turso.io',
-  authToken: process.env.DB_TOKEN
-})
+const msgModel = new MessageModel()
 
 io.on('connection', async (socket) => {
+  const msgController = new MessageController({
+    messageModel: msgModel,
+    client: socket,
+    server: io
+  })
+
   console.log('An user has connected!')
 
   if (!socket.recovered) {
-    let results
-    try {
-      console.log(db)
-      results = await db.execute({
-        sql: 'SELECT id, content, user FROM messages WHERE id > ?',
-        args: [socket.handshake.auth.serverOffset ?? 0]
-      })
-    } catch (e) {
-      console.error(e)
-      return
-    }
-
-    results?.rows.forEach(row => {
-      socket.emit('chat message', row.content, row.id?.toString(), row.user)
-    })
+    await msgController.offsetMessages()
   }
 
-  socket.on('chat message', async (msg: string) => {
-    const username: string = socket.handshake.auth.username ?? 'anonymous'
-    console.log({ username })
-
-    let result
-    try {
-      result = await db.execute({
-        sql: 'INSERT INTO messages (content, user) VALUES (:msg, :username)',
-        args: { msg, username }
-      })
-    } catch (e) {
-      console.error(e)
-      return
-    }
-
-    io.emit('chat message', msg, result.lastInsertRowid?.toString(), username) // POSIBLE UNDEFINED
-  })
+  socket.on('chat message', async (msg: string) => await msgController.save(msg))
 
   socket.on('disconnect', () => {
     console.log('An user has disconnected')

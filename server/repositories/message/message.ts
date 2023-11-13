@@ -1,7 +1,8 @@
 import { Client, Row } from '@libsql/client'
-import { sqlClient } from '../SqlClient.ts'
+import { sqlClient } from '../../SqlClient.ts'
 
-import { validateMsg, MessageInput } from '../../schemas/validateMsg.ts'
+import { MessageInput } from '../../../schemas/validateMsg.ts'
+import { ServerError } from '../../../errors/ServerError.ts'
 
 // interface AuthObj {
 //   serverOffset: number
@@ -15,14 +16,7 @@ export interface Repository {
   disconnect: () => void
 }
 
-interface MsgModel {
-  getAllFromOffset: (serverOffset: number) => Promise<Row[] | undefined>
-  save: (message: MessageInput) => Promise<bigint | undefined>
-}
-
-export type IMessageModel = Repository & MsgModel
-
-export class MessageModel implements IMessageModel {
+export class MessageModel implements Repository {
   readonly client
 
   constructor() { //eslint-disable-line
@@ -31,25 +25,22 @@ export class MessageModel implements IMessageModel {
 
   async getAllFromOffset (serverOffset = 0): Promise<Row[] | undefined> {
     const results = await this.client.execute({
-      sql: 'SELECT id, content, user_id FROM messages WHERE id > ?;',
+      sql: 'SELECT id, content, username FROM messages WHERE id > ?;',
       args: [serverOffset]
     })
+
     return results.rows
   }
 
-  async save (message: MessageInput): Promise<bigint | undefined> {
-    const params = validateMsg(message)
-    if (!params.success) {
-      throw new Error(params.error.message)
-    }
-
-    const { content, userId } = params.data
+  async save ({ content, username }: MessageInput): Promise<string> {
     const result = await this.client.execute({
-      sql: 'INSERT INTO messages (content, user_id) VALUES (:content, :userId);',
-      args: { content, userId }
+      sql: 'INSERT INTO messages (content, username) VALUES (:content, :username);',
+      args: { content, username }
     })
 
-    return result.lastInsertRowid
+    if (result.lastInsertRowid === undefined) throw new ServerError('Could not get last message id')
+
+    return result.lastInsertRowid.toString()
   }
 
   async reset (): Promise<void> {
@@ -58,7 +49,7 @@ export class MessageModel implements IMessageModel {
       CREATE TABLE IF NOT EXISTS messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         content TEXT,
-        user_id VARCHAR(40)
+        username VARCHAR(40)
       )
     `)
   }
