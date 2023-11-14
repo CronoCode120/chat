@@ -4,8 +4,8 @@ export async function up (client: Client): Promise<void> {
   await client.execute(`
     CREATE TABLE IF NOT EXISTS messages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      content TEXT,
-      username VARCHAR(40)
+      content TEXT NOT NULL,
+      username VARCHAR(40) NOT NULL
     );
   `)
 }

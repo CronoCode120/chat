@@ -1,13 +1,8 @@
 import { Client, Row } from '@libsql/client'
-import { sqlClient } from '../../SqlClient.ts'
+import { sqlClient } from '../SqlClient.ts'
 
-import { MessageInput } from '../../../schemas/validateMsg.ts'
-import { ServerError } from '../../../errors/ServerError.ts'
-
-// interface AuthObj {
-//   serverOffset: number
-//   userId: number
-// }
+import { MessageInput } from '../../schemas/validateMsg.ts'
+import { ServerError } from '../../errors/ServerError.ts'
 
 export interface Repository {
   client: Client
@@ -48,9 +43,9 @@ export class MessageModel implements Repository {
       DROP TABLE messages;
       CREATE TABLE IF NOT EXISTS messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        content TEXT,
-        username VARCHAR(40)
-      )
+        content TEXT NOT NULL,
+        username VARCHAR(40) NOT NULL
+      );
     `)
   }
 
