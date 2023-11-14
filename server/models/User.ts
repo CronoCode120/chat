@@ -1,10 +1,5 @@
-import { createHash } from 'node:crypto'
-
-function hashPassword (plainPassword: string): string {
-  return createHash('sha256').update(plainPassword).digest().toString('hex')
-}
-
-interface UserType { id: string, username: string, password: string }
+import { UserType, validateUser } from '../schemas/validateUser.ts'
+import { hashPassword } from '../utils/hashPassword.ts'
 
 export class User {
   readonly #id
@@ -15,7 +10,10 @@ export class User {
     return new User({ id, username, password })
   }
 
-  constructor({ id, username, password }: UserType) { // eslint-disable-line
+  constructor(userParams: UserType) { // eslint-disable-line
+    const params = validateUser(userParams)
+    if (!params.success) throw params.error
+    const { id, username, password } = params.data
     this.#id = id
     this.#username = username
     this.#password = hashPassword(password)
@@ -27,7 +25,5 @@ export class User {
 
   hasHashPassword = (hash: string): boolean => this.#password === hash
 
-  hasPassword (plainPassword: string): boolean {
-    return this.#password === hashPassword(plainPassword)
-  }
+  hasPassword = (plainPassword: string): boolean => this.#password === hashPassword(plainPassword)
 }

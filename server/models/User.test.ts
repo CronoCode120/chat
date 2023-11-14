@@ -42,4 +42,11 @@ describe('User', () => {
     expect(user.hasHashPassword(password)).toBe(false)
     expect(user.hasPassword(password)).toBe(true)
   })
+
+  describe('params validation', () => {
+    it('throws if username is missing', () => {
+      // @ts-expect-error
+      expect(() => User.create({ id: notImportantId, password: notImportantPassword })).toThrowError('User must have a name')
+    })
+  })
 })
