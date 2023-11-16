@@ -1,42 +1,20 @@
 import express from 'express'
-import { configDotenv } from 'dotenv'
-
-import { Server } from 'socket.io'
 import { createServer } from 'node:http'
-import { MessageModel } from './models/repositories/message/message.ts'
-import { MessageController } from './controllers/message/message.ts'
+import { createSocket, initSocket } from './socket.ts'
+import { MessageRepository } from './repositories/message/message.ts'
+import { configDotenv } from 'dotenv'
 
 configDotenv()
 
 const port = process.env.PORT ?? 3000
 
-const app = express()
+export const app = express()
 const server = createServer(app)
-const io = new Server(server, {
-  connectionStateRecovery: {}
-})
 
-const msgModel = new MessageModel()
+const msgRepository = new MessageRepository()
 
-io.on('connection', async (socket) => {
-  const msgController = new MessageController({
-    messageModel: msgModel,
-    client: socket,
-    server: io
-  })
-
-  console.log('An user has connected!')
-
-  if (!socket.recovered) {
-    await msgController.offsetMessages()
-  }
-
-  socket.on('chat message', async (msg: string) => await msgController.save(msg))
-
-  socket.on('disconnect', () => {
-    console.log('An user has disconnected')
-  })
-})
+const io = createSocket(server)
+initSocket({ io, msgRepository })
 
 app.get('/', (req, res) => {
   res.sendFile(process.cwd() + '/client/index.html')

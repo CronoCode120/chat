@@ -11,7 +11,7 @@ export interface Repository {
   disconnect: () => void
 }
 
-export class MessageModel implements Repository {
+export class MessageRepository implements Repository {
   readonly client
 
   constructor() { //eslint-disable-line

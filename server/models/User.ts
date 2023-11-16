@@ -1,4 +1,3 @@
-import { InvalidParamsError } from '../errors/InvalidParams.ts'
 import { UserType, validateUser } from '../schemas/validateUser.ts'
 import { hashPassword } from '../utils/hashPassword.ts'
 

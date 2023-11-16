@@ -1,23 +1,23 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
-import { MessageModel } from './message.ts'
-import { MessageInput } from '../../../schemas/validateMsg.ts'
+import { MessageRepository } from './message.ts'
+import { MessageInput } from '../../schemas/validateMsg.ts'
 
-describe('MessageModelSql', () => {
-  let messageModel: MessageModel, saveAllMsgs: (msgArr: MessageInput[]) => Promise<void>
+describe('MessageRepositorySql', () => {
+  let messageRepository: MessageRepository, saveAllMsgs: (msgArr: MessageInput[]) => Promise<void>
 
   beforeAll(async () => {
-    messageModel = new MessageModel()
+    messageRepository = new MessageRepository()
 
     saveAllMsgs = async (msgArr: MessageInput[]): Promise<void> => {
       for (const msg of msgArr) {
-        await messageModel.save(msg)
+        await messageRepository.save(msg)
       }
     }
   })
 
-  afterEach(async () => await messageModel.reset())
+  afterEach(async () => await messageRepository.reset())
 
-  afterAll(async () => messageModel.disconnect())
+  afterAll(async () => messageRepository.disconnect())
 
   describe('getAllFromOffset', () => {
     const newMessages = [
@@ -35,7 +35,7 @@ describe('MessageModelSql', () => {
 
       await saveAllMsgs(newMessages)
 
-      const messageArr = await messageModel.getAllFromOffset(2)
+      const messageArr = await messageRepository.getAllFromOffset(2)
 
       expect(messageArr).toEqual(expectedMsg)
     })
@@ -45,7 +45,7 @@ describe('MessageModelSql', () => {
 
       await saveAllMsgs(newMessages)
 
-      const messageArr = await messageModel.getAllFromOffset()
+      const messageArr = await messageRepository.getAllFromOffset()
 
       expect(messageArr).toEqual(expectedMsg)
     })
@@ -58,8 +58,8 @@ describe('MessageModelSql', () => {
         username: '11bf5b37-e0b8-42e0-8dcf-dc8c4aefc000'
       }
 
-      const lastId = await messageModel.save(newMsg)
-      const result = await messageModel.getAllFromOffset()
+      const lastId = await messageRepository.save(newMsg)
+      const result = await messageRepository.getAllFromOffset()
 
       const expectedMsg = {
         content: 'Mensaje de prueba',

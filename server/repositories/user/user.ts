@@ -24,7 +24,7 @@ export class UserRepository implements Repository {
 
   async findById (id: string): Promise<UserType | null> {
     const result = await this.client.execute({
-      sql: 'SELECT id, username FROM users WHERE id = ?;',
+      sql: 'SELECT id, username, password FROM users WHERE id = ?;',
       args: [id]
     })
     if (result.rows.length === 0) return null

@@ -24,7 +24,7 @@ describe('UserRepositorySql', () => {
       await userRepository.save(mockUser)
       const user = await userRepository.findById(mockUser.id)
 
-      expect(user).toEqual({ id: mockUser.id, username: mockUser.username })
+      expect(user).toEqual({ id: mockUser.id, username: mockUser.username, password: mockUser.getPassword() })
     })
 
     it('returns null if no user is found', async () => {
