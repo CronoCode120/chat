@@ -4,7 +4,7 @@ import { configDotenv } from 'dotenv'
 import { Server } from 'socket.io'
 import { createServer } from 'node:http'
 import { MessageModel } from './models/repositories/message/message.ts'
-import { MessageController } from './controllers/message.ts'
+import { MessageController } from './controllers/message/message.ts'
 
 configDotenv()
 

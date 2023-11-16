@@ -1,23 +1,21 @@
 import { describe, expect, it } from 'vitest'
 import { validateUser } from './validateUser.ts'
-import { ZodError } from 'zod'
+import { InvalidParamsError } from '../errors/InvalidParams.ts'
 
 describe('validateUser', () => {
-  it('should validate a valid user', () => {
-    const user = {
-      username: 'user',
-      id: '123',
-      password: 'password'
-    }
+  const mockUser = {
+    username: 'user',
+    id: '123',
+    password: 'password'
+  }
 
-    const result = validateUser(user)
+  it('should return a valid user', () => {
+    const result = validateUser(mockUser)
 
-    expect(result.success).toBe(true)
-    // @ts-expect-error
-    expect(result.data).toStrictEqual(user)
+    expect(result).toStrictEqual(mockUser)
   })
 
-  it('should return an error if user is invalid', () => {
+  it('should throw an InvalidParamsError if user is invalid', () => {
     const user = {
       username: 'user',
       id: 123,
@@ -25,10 +23,38 @@ describe('validateUser', () => {
     }
 
     // @ts-expect-error
-    const result = validateUser(user)
+    expect(() => validateUser(user)).toThrowError(InvalidParamsError)
+  })
 
-    expect(result.success).toBe(false)
+  it('throws if username is missing', () => {
     // @ts-expect-error
-    expect(result.error).toBeInstanceOf(ZodError)
+    expect(() => validateUser({ id: mockUser.id, password: mockUser.password })).toThrowError('User must have a name')
+  })
+
+  it('throws if id is missing', () => {
+    // @ts-expect-error
+    expect(() => validateUser({ username: mockUser.username, password: mockUser.password })).toThrowError('User must have an id')
+  })
+
+  it('throws if password is missing', () => {
+    // @ts-expect-error
+    expect(() => validateUser({ id: mockUser.id, username: mockUser.username })).toThrowError('User must have a password')
+  })
+
+  it.each([
+    [{ id: 1234 }, 'id'],
+    [{ username: 1234 }, 'name'],
+    [{ password: 123456 }, 'password']
+    // @ts-expect-error
+  ])('throws if param is not a string', ({ id = mockUser.id, username = mockUser.username, password = mockUser.password }, param) => {
+    expect(() => validateUser({ id, username, password })).toThrowError(`User ${param} must be a string`)
+  })
+
+  it('throws if password has less than 6 characters', () => {
+    expect(() => validateUser({ id: mockUser.id, username: mockUser.username, password: '1234' })).toThrowError('User password must have at least 6 characters')
+  })
+
+  it('throws if username has less than 4 characters', () => {
+    expect(() => validateUser({ id: mockUser.id, username: 'you', password: mockUser.password })).toThrowError('User name must have at least 4 characters')
   })
 })

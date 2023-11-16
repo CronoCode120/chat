@@ -1,5 +1,9 @@
 import { describe, it, expect, vi } from 'vitest'
 import { MessageController } from './message.ts'
+import { validateMsg } from '../../schemas/validateMsg.ts'
+import * as validateMsgModule from '../../schemas/validateMsg.ts'
+
+vi.spyOn(validateMsgModule, 'validateMsg')
 
 const mockMessages = [
   { content: 'Message 1', id: 1, username: '1' },
@@ -79,38 +83,12 @@ describe('MessageController', () => {
       expect(mockServer.emit).toBeCalledWith(socketEvent, msg, mockServerOffset, mockUsername)
     })
 
-    describe('PARAMS VALIDATIONS', () => {
-      it('throws if "content" parameter is missing', async () => {
-        const messageController = setupMsgController(mockMsgModel)
-        // @ts-expect-error
-        await expect(async () => await messageController.save()).rejects.toThrowError('Message must have content')
-      })
+    it('calls validation function with the message params', async () => {
+      const msgController = setupMsgController(mockMsgModel)
 
-      it('throws if "username" parameter is missing', async () => {
-        const socket = { handshake: { auth: {} } }
+      await msgController.save('message')
 
-        const msgController = setupMsgController(mockMsgModel, socket)
-        const content = 'Test'
-
-        await expect(async () => await msgController.save(content)).rejects.toThrowError('Message must include username')
-      })
-
-      it('throws if "content" parameter is not a string', async () => {
-        const messageController = setupMsgController(mockMsgModel)
-        const newMsg = 10
-
-        // @ts-expect-error
-        await expect(async () => await messageController.save(newMsg)).rejects.toThrowError('Message content must be a string')
-      })
-
-      it('throws if "username" parameter is not a string', async () => {
-        const socket = { handshake: { auth: { username: 12 } } }
-
-        const messageController = setupMsgController(mockMsgModel, socket)
-        const newMsg = 'Test'
-
-        await expect(async () => await messageController.save(newMsg)).rejects.toThrowError('Message username must be a string')
-      })
+      expect(validateMsg).toBeCalledWith({ content: 'message', username: mockUsername })
     })
   })
 })

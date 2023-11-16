@@ -1,5 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { User } from './User.ts'
+import { validateUser } from '../schemas/validateUser.ts'
+import * as validateUserModule from '../schemas/validateUser.ts'
+
+vi.spyOn(validateUserModule, 'validateUser')
 
 describe('User', () => {
   const notImportantId = 'id'
@@ -39,37 +43,21 @@ describe('User', () => {
       username: notImportantPassword
     })
 
-    expect(user.hasHashPassword(password)).toBe(false)
+    expect(user.getPassword()).not.toEqual(password)
     expect(user.hasPassword(password)).toBe(true)
   })
 
-  describe('params validation', () => {
-    it('throws if username is missing', () => {
-      // @ts-expect-error
-      expect(() => User.create({ id: notImportantId, password: notImportantPassword })).toThrowError('User must have a name')
+  it('calls validation function with user params', () => {
+    User.create({
+      id: notImportantId,
+      username: notImportantName,
+      password: notImportantPassword
     })
 
-    it('throws if id is missing', () => {
-      // @ts-expect-error
-      expect(() => User.create({ username: notImportantName, password: notImportantPassword })).toThrowError('User must have an id')
-    })
-
-    it('throws if password is missing', () => {
-      // @ts-expect-error
-      expect(() => User.create({ id: notImportantId, username: notImportantName })).toThrowError('User must have a password')
-    })
-
-    it.each([
-      [{ id: 1234 }, 'id'],
-      [{ username: 1234 }, 'name'],
-      [{ password: 123456 }, 'password']
-      // @ts-expect-error
-    ])('throws if param is not a string', ({ id = notImportantId, username = notImportantName, password = notImportantPassword }, param) => {
-      expect(() => User.create({ id, username, password })).toThrowError(`User ${param} must be a string`)
-    })
-
-    it('throws if password has less than 6 characters', () => {
-      expect(() => User.create({ id: notImportantId, username: notImportantName, password: '1234' })).toThrowError('User password must have at least 6 characters')
+    expect(validateUser).toBeCalledWith({
+      id: notImportantId,
+      username: notImportantName,
+      password: notImportantPassword
     })
   })
 })

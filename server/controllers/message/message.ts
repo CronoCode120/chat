@@ -1,14 +1,13 @@
 import { Server, Socket } from 'socket.io'
-import { IMessageModel } from '../models/repositories/message/message.ts'
-import { validateMsg } from '../schemas/validateMsg.ts'
-import { InvalidParamsError } from '../errors/InvalidParams.ts'
+import { validateMsg } from '../../schemas/validateMsg.ts'
+import { MessageModel } from '../../repositories/message/message.ts'
 
 export class MessageController {
   readonly messageModel
   client: Socket
   server: Server
 
-  constructor({ messageModel, client, server }: { messageModel: IMessageModel, client: Socket, server: Server }) { // eslint-disable-line
+  constructor({ messageModel, client, server }: { messageModel: MessageModel, client: Socket, server: Server }) { // eslint-disable-line
     this.messageModel = messageModel
     this.client = client
     this.server = server
@@ -24,12 +23,8 @@ export class MessageController {
 
   async save (content: string): Promise<void> {
     const username = this.client.handshake.auth.username
-    const params = validateMsg({ content, username })
-    if (!params.success) {
-      throw new InvalidParamsError(params.error.message)
-    }
+    const msg = validateMsg({ content, username })
 
-    const msg = params.data
     const lastId = await this.messageModel.save(msg)
 
     this.server.emit('chat message', content, lastId, username)

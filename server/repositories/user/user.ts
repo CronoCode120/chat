@@ -2,6 +2,7 @@ import { Client } from '@libsql/client/http'
 import { Repository } from '../message/message.ts'
 import { sqlClient } from '../SqlClient.ts'
 import { UserType } from '../../schemas/validateUser.ts'
+import { User } from '../../models/User.ts'
 
 export class UserRepository implements Repository {
   client: Client
@@ -10,12 +11,15 @@ export class UserRepository implements Repository {
     this.client = sqlClient
   }
 
-  async save ({ id, username, password }: UserType): Promise<void> {
-    const result = await this.client.execute({
+  async save (user: User): Promise<void> {
+    await this.client.execute({
       sql: 'INSERT INTO users (id, username, password) VALUES (:id, :username, :password);',
-      args: { id, username, password }
+      args: {
+        id: user.id,
+        username: user.username,
+        password: user.getPassword()
+      }
     })
-    console.log(result)
   }
 
   async findById (id: string): Promise<UserType | null> {

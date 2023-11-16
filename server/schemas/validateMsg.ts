@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { InvalidParamsError } from '../errors/InvalidParams.ts'
 
 export const msgInputSchema = z.object({
   content: z.string({
@@ -13,4 +14,9 @@ export const msgInputSchema = z.object({
 
 export type MessageInput = z.infer<typeof msgInputSchema>
 
-export const validateMsg = (msg: MessageInput): z.SafeParseReturnType<MessageInput, MessageInput> => msgInputSchema.safeParse(msg)
+export function validateMsg (msg: MessageInput): MessageInput {
+  const params = msgInputSchema.safeParse(msg)
+  if (!params.success) throw new InvalidParamsError(params.error.message)
+
+  return params.data
+}
