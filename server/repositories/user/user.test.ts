@@ -35,4 +35,21 @@ describe('UserRepositorySql', () => {
       expect(user).toBeNull()
     })
   })
+
+  describe('findByUsername', () => {
+    it('gets the user with the provided username', async () => {
+      await userRepository.save(mockUser)
+      const user = await userRepository.findByUsername(mockUser.username)
+
+      expect(user).toEqual({ id: mockUser.id, username: mockUser.username, password: mockUser.getPassword() })
+    })
+
+    it('returns null if no user is found', async () => {
+      await userRepository.save(mockUser)
+
+      const user = await userRepository.findByUsername('cronocode1')
+
+      expect(user).toBeNull()
+    })
+  })
 })

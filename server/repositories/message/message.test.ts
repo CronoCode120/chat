@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import { MessageRepository } from './message.ts'
 import { MessageInput } from '../../schemas/validateMsg.ts'
 
@@ -15,7 +15,7 @@ describe('MessageRepositorySql', () => {
     }
   })
 
-  afterEach(async () => await messageRepository.reset())
+  beforeEach(async () => await messageRepository.reset())
 
   afterAll(async () => messageRepository.disconnect())
 
