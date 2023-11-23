@@ -1,5 +1,5 @@
 import { UserType, validateUser } from '../schemas/validateUser.ts'
-import { hashPassword } from '../utils/hashPassword.ts'
+import { comparePassword, hashPassword } from '../utils/hashPassword.ts'
 
 export class User {
   readonly id
@@ -22,7 +22,7 @@ export class User {
 
   hasUsername = (username: string): boolean => this.username === username
 
-  hasPassword = (plainPassword: string): boolean => this.#password === hashPassword(plainPassword)
+  hasPassword = (plainPassword: string): boolean => comparePassword(plainPassword, this.#password)
 
   getPassword = (): string => this.#password
 }

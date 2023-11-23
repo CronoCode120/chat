@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { UserController } from './user.ts'
 import { User } from '../../models/User.ts'
+import { hashPassword } from '../../utils/hashPassword.ts'
 
 const mockUsername = 'user'
 const mockPassword = 'password'
@@ -19,9 +20,18 @@ const userRepository: any = {
   findByUsername: vi.fn(async () => await Promise.resolve(null))
 }
 const generateUUID: any = vi.fn(() => mockId)
+const generateToken: any = vi.fn(() => '::token::')
+
+function setupUserController ({ mockUserRepository = userRepository, mockGenerateUUID = generateUUID, mockGenerateToken = generateToken } = {}): UserController {
+  return new UserController({
+    userRepository: mockUserRepository,
+    generateToken: mockGenerateToken,
+    generateUUID: mockGenerateUUID
+  })
+}
 
 describe('UserController', () => {
-  const userController = new UserController({ generateUUID, userRepository })
+  const userController = setupUserController()
   const req: any = { body: { username: mockUsername, password: mockPassword } }
 
   afterEach(() => { vi.clearAllMocks() })
@@ -50,25 +60,25 @@ describe('UserController', () => {
     })
 
     it('throws an error if username is already in use', async () => {
-      const mockRepository = {
+      const mockUserRepository = {
         save: vi.fn(),
         findByUsername: vi.fn(async () => await Promise.resolve('::user::'))
       }
-      // @ts-expect-error
-      const controller = new UserController({ userRepository: mockRepository, generateUUID })
+
+      const controller = setupUserController({ mockUserRepository })
 
       await expect(async () => await controller.register(req, res)).rejects.toThrowError('Username already in use')
-      expect(mockRepository.findByUsername).toBeCalled()
+      expect(mockUserRepository.findByUsername).toBeCalled()
     })
   })
 
   describe('LOG IN', () => {
     it('throws an error if username does not exist', async () => {
-      const mockRepository = {
+      const mockUserRepository = {
         findByUsername: vi.fn(async () => await Promise.resolve(null))
       }
-      // @ts-expect-error
-      const controller = new UserController({ userRepository: mockRepository, generateUUID })
+
+      const controller = setupUserController({ mockUserRepository })
 
       await expect(async () => await controller.login(req, res)).rejects.toThrowError('Username or password is incorrect')
     })
@@ -79,26 +89,31 @@ describe('UserController', () => {
         password: 'Password',
         id: mockId
       }
-      const mockRepository = {
+      const mockUserRepository = {
         findByUsername: vi.fn(async () => await Promise.resolve(user))
       }
-      // @ts-expect-error
-      const controller = new UserController({ userRepository: mockRepository, generateUUID })
+
+      const controller = setupUserController({ mockUserRepository })
 
       await expect(async () => await controller.login(req, res)).rejects.toThrowError('Username or password is incorrect')
     })
 
-    it('responds with a token if credentials are correct', async () => {
-      const mockRepository = {
-        findByUsername: vi.fn(async () => await Promise.resolve(mockUser))
+    it('responds with username and token if credentials are correct', async () => {
+      const mockSavedUser = {
+        id: mockId,
+        username: mockUsername,
+        password: hashPassword(mockPassword)
       }
-      // @ts-expect-error
-      const controller = new UserController({ userRepository: mockRepository, generateUUID })
+      const mockUserRepository = {
+        findByUsername: vi.fn(async () => await Promise.resolve(mockSavedUser))
+      }
+
+      const controller = setupUserController({ mockUserRepository })
 
       await controller.login(req, res)
 
       expect(res.status).toBeCalledWith(200)
-      expect(res.json).toBeCalledWith({ token: '::token::' })
+      expect(res.json).toBeCalledWith({ token: '::token::', username: mockUsername })
     })
   })
 

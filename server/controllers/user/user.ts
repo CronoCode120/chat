@@ -1,21 +1,27 @@
 import { Request, Response } from 'express'
 import { UserRepository } from '../../repositories/user/user.ts'
 import { User } from '../../models/User.ts'
+import { comparePassword } from '../../utils/hashPassword.ts'
 import { NotFoundError } from '../../errors/NotFound.ts'
 import { InvalidParamsError } from '../../errors/InvalidParams.ts'
+
+import { UserData } from '../../models/generateToken.ts'
 
 interface Props {
   userRepository: UserRepository
   generateUUID: () => string
+  generateToken: ({ id, username }: UserData) => string
 }
 
 export class UserController {
   repository
   readonly generateUUID
+  readonly generateToken
 
-  constructor({ userRepository, generateUUID }: Props) { // eslint-disable-line
+  constructor({ userRepository, generateUUID, generateToken }: Props) { // eslint-disable-line
     this.repository = userRepository
     this.generateUUID = generateUUID
+    this.generateToken = generateToken
   }
 
   register = async (req: Request, res: Response): Promise<void> => {
@@ -38,11 +44,14 @@ export class UserController {
 
     const passwordCorrect = user === null
       ? false
-      : User.create(user).hasPassword(password)
+      : comparePassword(password, user.password)
 
     if (!passwordCorrect) throw new InvalidParamsError('Username or password is incorrect')
 
-    res.status(200).json({ token: '::token::' })
+    // @ts-expect-error
+    const token = this.generateToken({ id: user.id, username: user.username })
+
+    res.status(200).json({ token, username: user?.username })
   }
 
   findById = async (req: Request, res: Response): Promise<void> => {

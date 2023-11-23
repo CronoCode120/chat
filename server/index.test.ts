@@ -18,13 +18,14 @@ describe('Server integration', () => {
       const { body, status } = await supertest(app)
         .post('/user/login')
         .send({
-          username: 'John Doe',
+          username: 'John Doy',
           password: 'password'
         })
 
       expect(status).toStrictEqual(200)
       expect(body).toBeDefined()
       expect(typeof body.token).toBe('string')
+      expect(body.token).toMatch('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.')
     })
   })
 })
