@@ -1,8 +1,13 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeEach } from 'vitest'
 import supertest from 'supertest'
-import { app } from './index.ts'
+import { Server } from './Server.ts'
+
+const server = new Server()
+const app = server.app
 
 describe('Server integration', () => {
+  beforeEach(async () => await server.reset())
+
   describe('REGISTER USER', () => {
     it('user is registered properly', async () => {
       const res = await supertest(app)

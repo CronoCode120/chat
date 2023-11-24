@@ -1,18 +1,32 @@
 import { Router } from 'express'
-import { UserRepository } from '../repositories/user/user.ts'
 import { UserController } from '../controllers/user/user.ts'
-import { generateUUID } from '../models/generateUUID.ts'
-import { generateToken } from '../models/generateToken.ts'
 
-export const router = Router()
+import { UserRepository } from '../repositories/user/user.ts'
+import { GenerateUUID } from '../models/generateUUID.ts'
+import { GenerateToken } from '../models/generateToken.ts'
 
-const userRepository = new UserRepository()
-const userController = new UserController({
+export interface UserRouterParams {
+  userRepository: UserRepository
+  generateUUID: GenerateUUID
+  generateToken: GenerateToken
+}
+
+export const createUserRouter = ({
   userRepository,
   generateUUID,
   generateToken
-})
+}: UserRouterParams
+): Router => {
+  const router = Router()
 
-router.post('/register', userController.register) // eslint-disable-line
+  const userController = new UserController({
+    userRepository,
+    generateUUID,
+    generateToken
+  })
 
-router.post('/login', userController.login) // eslint-disable-line
+  router.post('/register', userController.register) // eslint-disable-line
+  router.post('/login', userController.login) // eslint-disable-line
+
+  return router
+}

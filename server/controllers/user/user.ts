@@ -5,12 +5,13 @@ import { comparePassword } from '../../utils/hashPassword.ts'
 import { NotFoundError } from '../../errors/NotFound.ts'
 import { InvalidParamsError } from '../../errors/InvalidParams.ts'
 
-import { UserData } from '../../models/generateToken.ts'
+import { GenerateToken } from '../../models/generateToken.ts'
+import { GenerateUUID } from '../../models/generateUUID.ts'
 
 interface Props {
   userRepository: UserRepository
-  generateUUID: () => string
-  generateToken: ({ id, username }: UserData) => string
+  generateUUID: GenerateUUID
+  generateToken: GenerateToken
 }
 
 export class UserController {

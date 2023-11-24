@@ -3,7 +3,7 @@ import { createServer } from 'node:http'
 import { createSocket, initSocket } from './socket.ts'
 import { MessageRepository } from './repositories/message/message.ts'
 import { configDotenv } from 'dotenv'
-import { router } from './routes/user.ts'
+import { createUserRouter } from './routes/user.ts'
 
 configDotenv()
 
@@ -18,7 +18,7 @@ const io = createSocket(server)
 initSocket({ io, msgRepository })
 
 app.use(express.json())
-app.use('/user', router)
+app.use('/user', createUserRouter)
 
 app.get('/', (req, res) => {
   res.sendFile(process.cwd() + '/client/index.html')
