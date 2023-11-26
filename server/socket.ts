@@ -28,7 +28,7 @@ export function initSocket ({ io, msgRepository }: SocketArgs): void {
 
     if (!socket.recovered) await msgController.offsetMessages()
 
-    socket.on('chat message', async (msg: string) => await msgController.save(msg))
+    socket.on('chat message', msgController.save)
 
     socket.on('disconnect', () => {
       console.log('An user has disconnected')

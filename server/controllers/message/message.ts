@@ -1,13 +1,13 @@
 import { Server, Socket } from 'socket.io'
 import { validateMsg } from '../../schemas/validateMsg.ts'
-import { MessageModel } from '../../repositories/message/message.ts'
+import { MessageRepository } from '../../repositories/message/message.ts'
 
 export class MessageController {
   readonly messageModel
   client: Socket
   server: Server
 
-  constructor({ messageModel, client, server }: { messageModel: MessageModel, client: Socket, server: Server }) { // eslint-disable-line
+  constructor({ messageModel, client, server }: { messageModel: MessageRepository, client: Socket, server: Server }) { // eslint-disable-line
     this.messageModel = messageModel
     this.client = client
     this.server = server
@@ -21,7 +21,7 @@ export class MessageController {
     })
   }
 
-  async save (content: string): Promise<void> {
+  save = async (content: string): Promise<void> => {
     const username = this.client.handshake.auth.username
     const msg = validateMsg({ content, username })
 

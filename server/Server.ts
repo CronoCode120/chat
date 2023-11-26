@@ -6,6 +6,7 @@ import { GenerateUUID, generateUUID } from './models/generateUUID.ts'
 import { createUserRouter } from './routes/user.ts'
 import { GenerateToken, generateToken } from './models/generateToken.ts'
 import { configDotenv } from 'dotenv'
+import { createSocket, initSocket } from './socket.ts'
 
 interface ServerDependencies {
   msgRepository: MessageRepository
@@ -17,17 +18,23 @@ interface ServerDependencies {
 export class Server {
   readonly dependencies
   readonly app
-  readonly server
+  readonly http
+  socket
 
   constructor() { // eslint-disable-line
     configDotenv()
 
     this.dependencies = this.createDependencies()
     this.app = express()
-    this.server = createServer(this.app)
+    this.http = createServer(this.app)
+    this.socket = createSocket(this.http)
 
     this.app.use(express.json())
     this.app.use('/user', this.generateUserRouter())
+
+    this.app.get('/', (req, res) => {
+      res.sendFile(process.cwd() + '/client/index.html')
+    })
   }
 
   createDependencies (): ServerDependencies {
@@ -50,6 +57,13 @@ export class Server {
     return createUserRouter(params)
   }
 
+  startSocket (): void {
+    initSocket({
+      io: this.socket,
+      msgRepository: this.dependencies.msgRepository
+    })
+  }
+
   async reset (): Promise<void> {
     await this.dependencies.msgRepository.reset()
     await this.dependencies.userRepository.reset()
@@ -63,7 +77,7 @@ export class Server {
   listen (): void {
     const port = process.env.PORT ?? 3000
 
-    this.server.listen(port, () => {
+    this.http.listen(port, () => {
       console.log(`Server running on port ${port}`)
     })
   }
