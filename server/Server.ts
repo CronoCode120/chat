@@ -5,8 +5,9 @@ import { UserRepository } from './repositories/user/user.ts'
 import { GenerateUUID, generateUUID } from './models/generateUUID.ts'
 import { createUserRouter } from './routes/user.ts'
 import { GenerateToken, generateToken } from './models/generateToken.ts'
-import { configDotenv } from 'dotenv'
 import { createSocket, initSocket } from './socket.ts'
+import { handleError } from './handleError.ts'
+import { config } from './Shared/config.ts'
 
 interface ServerDependencies {
   msgRepository: MessageRepository
@@ -22,8 +23,6 @@ export class Server {
   socket
 
   constructor() { // eslint-disable-line
-    configDotenv()
-
     this.dependencies = this.createDependencies()
     this.app = express()
     this.http = createServer(this.app)
@@ -35,6 +34,8 @@ export class Server {
     this.app.get('/', (req, res) => {
       res.sendFile(process.cwd() + '/client/index.html')
     })
+
+    this.app.use(handleError)
   }
 
   createDependencies (): ServerDependencies {
@@ -75,7 +76,7 @@ export class Server {
   }
 
   listen (): void {
-    const port = process.env.PORT ?? 3000
+    const port = config.port
 
     this.http.listen(port, () => {
       console.log(`Server running on port ${port}`)

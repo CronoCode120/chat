@@ -67,7 +67,7 @@ describe('UserController', () => {
 
       const controller = setupUserController({ mockUserRepository })
 
-      await expect(async () => await controller.register(req, res)).rejects.toThrowError('Username already in use')
+      await expect(async () => await controller.register(req, res)).rejects.toThrowError('User already exists')
       expect(mockUserRepository.findByUsername).toBeCalled()
     })
   })

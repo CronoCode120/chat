@@ -2,11 +2,12 @@ import { Request, Response } from 'express'
 import { UserRepository } from '../../repositories/user/user.ts'
 import { User } from '../../models/User.ts'
 import { comparePassword } from '../../utils/hashPassword.ts'
-import { NotFoundError } from '../../errors/NotFound.ts'
+import { UserNotFoundError } from '../../errors/UserNotFound.ts'
 import { InvalidParamsError } from '../../errors/InvalidParams.ts'
 
 import { GenerateToken } from '../../models/generateToken.ts'
 import { GenerateUUID } from '../../models/generateUUID.ts'
+import { UserAlreadyExistsError } from '../../errors/UserAlreadyExists.ts'
 
 interface Props {
   userRepository: UserRepository
@@ -29,7 +30,7 @@ export class UserController {
     const { username, password } = req.body
 
     const usernameExists = await this.repository.findByUsername(username) !== null
-    if (usernameExists) throw new InvalidParamsError('Username already in use')
+    if (usernameExists) throw new UserAlreadyExistsError()
 
     const user = User.create({ id: this.generateUUID(), username, password })
 
@@ -58,7 +59,7 @@ export class UserController {
   findById = async (req: Request, res: Response): Promise<void> => {
     const result = await this.repository.findById(req.body.id)
 
-    if (result === null) throw new NotFoundError('User not found')
+    if (result === null) throw new UserNotFoundError('User not found')
 
     res.status(200).json({ user: result })
   }

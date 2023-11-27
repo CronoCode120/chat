@@ -1,8 +1,10 @@
+import { ErrorCode } from './ErrorCode.ts'
+
 export class InvalidParamsError extends Error {
-  readonly code: string
+  readonly code: ErrorCode
 
   constructor(msg: string) { // eslint-disable-line
     super(msg)
-    this.code = 'INVALID_PARAMS'
+    this.code = ErrorCode.INVALID_PARAMS
   }
 }

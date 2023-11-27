@@ -1,0 +1,11 @@
+export const enum ErrorCode {
+  INVALID_PARAMS = 'INVALID_PARAMS',
+  USER_ALREADY_EXISTS = 'USER_ALREADY_EXISTS',
+  USER_NOT_FOUND = 'NOT_FOUND',
+  SERVER_ERROR = 'SERVER_ERROR',
+  UNDEFINED_ENV_VARIABLES = 'UNDEFINED_ENV_VARIABLES'
+}
+
+export interface CustomError extends Error {
+  code: ErrorCode
+}

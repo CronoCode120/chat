@@ -12,5 +12,6 @@ export const config = {
   },
   jwt: {
     secret: process.env.SECRET as string
-  }
+  },
+  port: process.env.PORT ?? 3000
 }
